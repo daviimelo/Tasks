@@ -104,7 +104,7 @@ export default class TaskList extends Component {
                     <ImageBackground style={styles.background} source={todayImage}>
                         <View style={styles.iconBar}>
                             <TouchableOpacity onPress={this.toggleFilter}>
-                                <Icon name={this.state.showDoneTask ? "eye" : "eye-slash"} size={20} color={commonStyles.colors.secundary}/>
+                                <Icon name={this.state.showDoneTask ? "eye" : "eye-slash"} size={20} color={commonStyles.colors.secondary}/>
                             </TouchableOpacity>
                         </View>
                         <View style={styles.titleBar}>
@@ -123,7 +123,7 @@ export default class TaskList extends Component {
                     </View>
                     {!this.state.showAddTask ?
                         <TouchableOpacity activeOpacity={0.8} style={styles.addButton} onPress={() => this.setState({showAddTask: true})}>
-                            <Icon name="plus" size={20} color={commonStyles.colors.secundary}/>
+                            <Icon name="plus" size={20} color={commonStyles.colors.secondary}/>
                         </TouchableOpacity>
                         : null
                     }
@@ -151,14 +151,14 @@ const styles = StyleSheet.create({
     title: {
         fontFamily: commonStyles.font,
         fontSize: 50,
-        color: commonStyles.colors.secundary,
+        color: commonStyles.colors.secondary,
         marginLeft: 20,
         marginBottom: 20,
     },
     subtitle: {
         fontFamily: commonStyles.font,
         fontSize: 20,
-        color: commonStyles.colors.secundary,
+        color: commonStyles.colors.secondary,
         marginLeft: 20,
         marginBottom: 30,
     },

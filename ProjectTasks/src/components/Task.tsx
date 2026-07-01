@@ -1,4 +1,4 @@
-import React, { Component } from "react"
+import React from "react"
 import { View, Text, StyleSheet, TouchableWithoutFeedback, TouchableOpacity } from "react-native"
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable'
 import commonStyles from "../styles/commonStyles"
@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
 
     excludeText: {
         fontFamily: commonStyles.font,
-        color: commonStyles.colors.secundary,
+        color: commonStyles.colors.secondary,
         fontSize: 15,
         margin: 10,
     },

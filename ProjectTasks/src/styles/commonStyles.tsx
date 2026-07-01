@@ -2,7 +2,7 @@ export default {
     font: 'Lato',
     colors: {
         today: '#9B1E28',
-        secundary: '#FFFFFF',
+        secondary: '#FFFFFF',
         primary: '#222222',
         subText: '#555555'
         

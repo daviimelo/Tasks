@@ -7,7 +7,7 @@ consign()
     .include('./config/passport.js')
     .then('./config/middlewares.js')
     .then('./api')
-    .then('./confg/routes.js')
+    .then('./config/routes.js')
     .into(app)
 app.db = db
 

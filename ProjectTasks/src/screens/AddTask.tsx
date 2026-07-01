@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     header: {
         fontFamily: commonStyles.font,
         backgroundColor: commonStyles.colors.today,
-        color: commonStyles.colors.secundary,
+        color: commonStyles.colors.secondary,
         textAlign: 'center',
         padding: 15,
         fontSize: 18,
@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
         fontFamily: commonStyles.font,
         height: 40,
         margin: 15,
-        backgroundColor: commonStyles.colors.secundary,
+        backgroundColor: commonStyles.colors.secondary,
         borderWidth: 1,
         borderColor: '#B1B1B1',
         borderRadius: 6,
