@@ -6,9 +6,21 @@ import commonStyles from "../styles/commonStyles";
 import moment from 'moment'
 import 'moment/locale/pt-br'
 import Icon from 'react-native-vector-icons/FontAwesome'
-import todayImage from "../assets/imgs/today.jpg"
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import axios from "axios";
+import { server, showError, showSuccess } from "../common";
+import todayImage from "../assets/imgs/today.jpg"
+import tomorrowImage from "../assets/imgs/tomorrow.jpg"
+import weekImage from "../assets/imgs/week.jpg"
+import monthImage from "../assets/imgs/month.jpg"
+
+interface TaskListProps {
+    title: string;
+    daysAhead: number;
+    navigation?: any;
+    route?: any;
+}
 
 interface ITask {
     id: number,
@@ -31,25 +43,42 @@ const initialState = {
     tasks: []
 }
 
-export default class TaskList extends Component {
+export default class TaskList extends Component<TaskListProps, IState> {
     state: IState = {
         ...initialState
     }
 
     componentDidMount = async () => {
         const stateString = await AsyncStorage.getItem('tasksState')
-        const state = JSON.parse(stateString as any) || initialState
-        this.setState(state, this.filterTasks)
+        const savedState = JSON.parse(stateString as any) || initialState
+        this.setState({
+            showDoneTask: savedState.showDoneTask
+        }, this.filterTasks)
+
+        this.loadTasks()
     }
 
-    toggleTask = (taskId: number) => {
-        const tasks = [...this.state.tasks]
-        tasks.forEach(task => {
-            if (task.id === taskId) {
-                task.doneAt = task.doneAt ? null : new Date()
-            }
-        })
-        this.setState({tasks}, this.filterTasks)
+    loadTasks = async () => {
+        try {
+            const maxDate = moment()
+                .add({ days: this.props.daysAhead })
+                .format('YYYY-MM-DD 23:59:59')
+            const res = await axios.get(`${server}/tasks?date=${maxDate}`)
+            this.setState({ tasks: res.data}, this.filterTasks)
+        } catch (e: any) {
+            const errorMessage = e.response?.data || e.message || "Ocorreu um erro inesperado";
+            showError(errorMessage);
+        }
+    }
+
+    toggleTask = async (taskId: number) => {
+        try {
+            await axios.put(`${server}/tasks/${taskId}/toggle`)
+            await this.loadTasks()
+        } catch (e: any) {
+            const errorMessage = e.message || "Ocorreu um erro inesperado";
+            showError(errorMessage);
+        }
     }
 
     toggleFilter = () => {
@@ -69,30 +98,56 @@ export default class TaskList extends Component {
         }
 
         this.setState({visibleTasks})
-        AsyncStorage.setItem('tasksState', JSON.stringify(this.state))
+        AsyncStorage.setItem('tasksState', JSON.stringify({
+            showDoneTask: this.state.showDoneTask
+        }))
     }
 
-    addTask = (newTask: ITask) => {
+    addTask = async (newTask: ITask) => {
         if (!newTask.desc.trim()) {
             Alert.alert('Dados Inválidos', 'A descrição não foi informada!')
             return
         }
 
-        const tasks = [...this.state.tasks]
+        try {
+            await axios.post(`${server}/tasks`, {
+                desc: newTask.desc,
+                estimateAt: newTask.estimateAt
+            })
 
-        tasks.push({
-            id: Math.random(),
-            desc: newTask.desc,
-            estimateAt: newTask.estimateAt,
-            doneAt: null
-        })
-
-        this.setState({ tasks, showAddTask: false }, this.filterTasks)
+            this.setState({ showAddTask: false }, this.loadTasks)
+        } catch (e: any) {
+            const errorMessage = e.message || "Ocorreu um erro inesperado";
+            showError(errorMessage);
+        }
     }
 
-    deleteTask = (id: number) => {
-        const tasks = this.state.tasks.filter(task => task.id !== id)
-        this.setState({ tasks }, this.filterTasks)
+    deleteTask = async (taskId: number) => {
+        try {
+            await axios.delete(`${server}/tasks/${taskId}`)
+            await this.loadTasks()
+        } catch (e: any) {
+            const errorMessage = e.message || "Ocorreu um erro inesperado";
+            showError(errorMessage);
+        }
+    }
+
+    getImage = () => {
+        switch(this.props.daysAhead) {
+            case 0: return todayImage
+            case 1: return tomorrowImage
+            case 7: return weekImage
+            default: return monthImage
+        }
+    }
+
+    getColors = () => {
+        switch(this.props.daysAhead) {
+            case 0: return commonStyles.colors.today
+            case 1: return commonStyles.colors.tomorrow
+            case 7: return commonStyles.colors.week
+            default: return commonStyles.colors.month
+        }
     }
 
     render() {
@@ -101,14 +156,17 @@ export default class TaskList extends Component {
             <GestureHandlerRootView style={{ flex: 1 }}>
                 <View style={styles.container}>
                     <AddTask isVisible={this.state.showAddTask} onCancel={() => this.setState({ showAddTask: false })} onSave={this.addTask as any}/>
-                    <ImageBackground style={styles.background} source={todayImage}>
+                    <ImageBackground style={styles.background} source={this.getImage()}>
                         <View style={styles.iconBar}>
+                            <TouchableOpacity onPress={() => this.props.navigation.openDrawer() }>
+                                <Icon name='bars' size={20} color={commonStyles.colors.secondary}/>
+                            </TouchableOpacity>
                             <TouchableOpacity onPress={this.toggleFilter}>
                                 <Icon name={this.state.showDoneTask ? "eye" : "eye-slash"} size={20} color={commonStyles.colors.secondary}/>
                             </TouchableOpacity>
                         </View>
                         <View style={styles.titleBar}>
-                            <Text style={styles.title}>Hoje</Text>
+                            <Text style={styles.title}>{this.props.title}</Text>
                             <Text style={styles.subtitle}>{today}</Text>
                         </View>
                     </ImageBackground>
@@ -122,7 +180,7 @@ export default class TaskList extends Component {
                         </FlatList>
                     </View>
                     {!this.state.showAddTask ?
-                        <TouchableOpacity activeOpacity={0.8} style={styles.addButton} onPress={() => this.setState({showAddTask: true})}>
+                        <TouchableOpacity activeOpacity={0.8} style={[styles.addButton, { backgroundColor: this.getColors() }]} onPress={() => this.setState({showAddTask: true})}>
                             <Icon name="plus" size={20} color={commonStyles.colors.secondary}/>
                         </TouchableOpacity>
                         : null
@@ -164,7 +222,7 @@ const styles = StyleSheet.create({
     },
     iconBar: {
         flexDirection: 'row',
-        justifyContent: 'flex-end',
+        justifyContent: 'space-between',
         marginHorizontal: 20,
         marginTop: Platform.OS === "ios" ? 40 : 20
     },
@@ -175,7 +233,6 @@ const styles = StyleSheet.create({
         width: 45,
         height: 45,
         borderRadius: '50%',
-        backgroundColor: commonStyles.colors.today,
         justifyContent: 'center',
         alignItems: 'center'
     }

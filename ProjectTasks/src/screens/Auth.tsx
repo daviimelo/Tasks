@@ -5,6 +5,7 @@ import commonStyles from '../styles/commonStyles';
 import AuthInput from '../components/AuthInput';
 import { server, showError, showSuccess } from '../common';
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface AuthProps {
     navigation?: any
@@ -56,8 +57,9 @@ export default class Auth extends Component<AuthProps> {
                 password: this.state.password
             })
 
+            AsyncStorage.setItem('userData', JSON.stringify(res.data))
             axios.defaults.headers.common['Authorization'] = `bearer ${res.data.token}`
-            this.props.navigation?.navigate('Home')
+            this.props.navigation?.navigate('Home', res.data)
             
         } catch (e: any) {
             const errorMessage = e.response?.data || e.message || "Ocorreu um erro inesperado";
@@ -66,7 +68,17 @@ export default class Auth extends Component<AuthProps> {
     }
 
     render() {
-        
+        const validations = []
+        validations.push(this.state.email && this.state.email.includes('@'))
+        validations.push(this.state.password && this.state.password.length >= 6)
+
+        if (this.state.stateNew) {
+            validations.push(this.state.name && this.state.name.trim().length >= 3)
+            validations.push(this.state.confirmPassword === this.state.password)
+        }
+
+        const validForm = validations.reduce((t, a) => t && a )
+
         return (
             <View style={styles.background}>
                 <Text style={styles.title}>Tasks</Text>
@@ -106,8 +118,11 @@ export default class Auth extends Component<AuthProps> {
                             secureTextEntry={true} 
                         />
                     }
-                    <TouchableOpacity onPress={this.signinOrSignup}>
-                        <View style={styles.button}>
+                    <TouchableOpacity 
+                        onPress={this.signinOrSignup}
+                        disabled={!validForm}
+                    >
+                        <View style={[styles.button, !validForm ? styles.buttonDisabled : {}]}>
                             <Text style={styles.buttonText}>{this.state.stateNew ? 'Criar' : 'Login'}</Text>
                         </View>
                     </TouchableOpacity>
@@ -163,6 +178,10 @@ const styles = StyleSheet.create({
         padding: 10,
         alignItems: 'center',
         borderRadius: 20
+    },
+
+    buttonDisabled: {
+        backgroundColor: '#969696'
     },
 
     buttonText: {

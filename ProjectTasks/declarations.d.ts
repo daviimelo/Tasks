@@ -6,3 +6,5 @@ declare module '*.gif';
 
 // Declaração para o locale do moment
 declare module 'moment/locale/pt-br';
+
+declare module 'react-native-gravatar';
